@@ -9,29 +9,40 @@
     body { margin:0; font-family: system-ui; background:#111; color:#fff; }
     .container { max-width: 500px; margin: 0 auto; padding: 15px; }
     .header { background:#222; padding:15px; border-radius:12px; text-align:center; }
-    .points { font-size: 2.5rem; font-weight:bold; color:#0f0; }
+    .profile { display:flex; align-items:center; justify-content:center; gap:15px; margin-bottom:10px; }
+    .profile img { width:60px; height:60px; border-radius:50%; border:3px solid #0f0; }
+    .points { font-size: 2.8rem; font-weight:bold; color:#0f0; margin:10px 0; }
     .tab-content { display:none; }
     .tab-content.active { display:block; }
     .nav { position:fixed; bottom:0; width:100%; max-width:500px; background:#222; display:flex; justify-content:space-around; padding:10px 0; }
     button { width:100%; padding:15px; margin:10px 0; background:#0a0; color:white; border:none; border-radius:12px; font-size:1.1rem; }
     .mine-btn { background: linear-gradient(#ff0, #f80); font-size:1.4rem; }
-    .task-card { background:#222; padding:15px; margin:10px 0; border-radius:12px; }
   </style>
 </head>
 <body>
   <div class="container">
+
     <!-- HOME -->
     <div id="home" class="tab-content active">
       <div class="header">
-        <h1>UC Mine Rewards</h1>
+        <!-- Profile -->
+        <div class="profile">
+          <img id="userPhoto" src="https://via.placeholder.com/60" alt="Profile">
+          <div>
+            <h2 id="userName">User</h2>
+            <small id="userId" style="color:#aaa;">ID: 000000</small>
+          </div>
+        </div>
+
         <div class="points" id="points">0</div>
         <small>ပွိုင့်</small>
       </div>
+      
       <button id="mineBtn" class="mine-btn">⛏️ မှန်း 2 နာရီ ကြာပြီ – Ad ကြည့်ပြီး မှန်း</button>
       <p id="cooldown" style="text-align:center; color:#aaa;"></p>
     </div>
 
-    <!-- TASKS, BOX, REDEEM (ရိုးရိုး) -->
+    <!-- အခြား Tab တွေ -->
     <div id="tasks" class="tab-content"><h2>📋 Tasks</h2></div>
     <div id="box" class="tab-content"><h2>🎁 Mystery Box</h2></div>
     <div id="redeem" class="tab-content"><h2>🎯 Redeem</h2></div>
@@ -45,11 +56,24 @@
   </div>
 
   <script>
-    const API_BASE = "https://xxxx.ngrok.io";   // ← ဒီနေရာမှာ သင့် ngrok URL ထည့်ပါ
+    const API_BASE = "https://xxxx.ngrok.io";   // ← သင့် ngrok URL ထည့်ပါ
     let points = 0;
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
+
+    // User Info ထည့်ပါ
+    function loadUserInfo() {
+      const user = tg.initDataUnsafe?.user;
+      if (user) {
+        document.getElementById('userName').textContent = user.first_name + (user.last_name ? " " + user.last_name : "");
+        document.getElementById('userId').textContent = "ID: " + user.id;
+        
+        if (user.photo_url) {
+          document.getElementById('userPhoto').src = user.photo_url;
+        }
+      }
+    }
 
     function updatePoints() {
       document.getElementById('points').textContent = points;
@@ -60,7 +84,7 @@
       document.getElementById(tab).classList.add('active');
     }
 
-    // Mine Button
+    // Mine Button (Backend နဲ့ ချိတ်ထားပြီး)
     document.getElementById('mineBtn').addEventListener('click', async () => {
       const userId = tg.initDataUnsafe?.user?.id || "test123";
       
@@ -80,124 +104,12 @@
           alert(data.message || "Cooldown ရှိနေသေးတယ်");
         }
       } catch (e) {
-        alert("❌ Backend နဲ့ မချိတ်နိုင်သေးပါဘူး\nNgrok URL မှန်ရဲ့လား?");
+        alert("❌ Backend နဲ့ မချိတ်နိုင်သေးပါဘူး");
       }
     });
 
-    // Initial
-    updatePoints();
-  </script>
-</body>
-</html>        <progress value="2450" max="15000" style="width:100%; height:15px;"></progress>
-      </div>
-    </div>
-
-    <!-- TASKS -->
-    <div id="tasks" class="tab-content">
-      <h2>📋 အလုပ်များ</h2>
-      <div class="task-card" onclick="completeTask(1)">
-        <strong>Ad ကြည့်ပါ</strong><br>
-        +80 pts
-      </div>
-      <div class="task-card" onclick="completeTask(2)">
-        <strong>Channel ဝင်ပါ</strong><br>
-        +50 pts
-      </div>
-      <div class="task-card" onclick="completeTask(3)">
-        <strong>Daily Login</strong><br>
-        +30 pts
-      </div>
-    </div>
-
-    <!-- MYSTERY BOX -->
-    <div id="box" class="tab-content">
-      <h2>🎁 Mystery Box</h2>
-      <button onclick="openBox()" style="background:#f0f; font-size:1.5rem; padding:40px;">
-        🎲 ပုံးဖွင့်မယ် (Free)
-      </button>
-      <p style="text-align:center;">တစ်နေ့ ၁ ခါ အခမဲ့။ နောက်တစ်ခါ Ad နဲ့ ရယူနိုင်ပါတယ်။</p>
-    </div>
-
-    <!-- REDEEM -->
-    <div id="redeem" class="tab-content">
-      <h2>🎯 UC လဲလှယ်ရန်</h2>
-      <div class="task-card" id="tier1">UC 60 — 5000 pts + 10 referrals</div>
-      <div class="task-card" id="tier2">UC 180 — 15000 pts (Tier 1 ပြီး)</div>
-      <div class="task-card" id="tier3">UC 320 — 30000 pts</div>
-      <div class="task-card" id="tier4">UC 660 — 60000 pts</div>
-      <button onclick="redeemTier(1)" style="margin-top:20px;">Tier 1 လဲလှယ်မယ်</button>
-    </div>
-
-  </div>
-
-  <!-- Bottom Navigation -->
-  <div class="nav">
-    <button onclick="showTab('home')">🏠 Home</button>
-    <button onclick="showTab('tasks')">📋 Tasks</button>
-    <button onclick="showTab('box')">🎁 Box</button>
-    <button onclick="showTab('redeem')">🎯 Redeem</button>
-  </div>
-
-  <script>
-    let points = 2450;
-    let lastClaim = Date.now() - 7200000; // 2 hours ago (testing)
-    let referrals = 8;
-
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-
-    function updatePoints() {
-      document.getElementById('points').textContent = points;
-    }
-
-    function showTab(tab) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-    }
-
-    // Mine Claim
-    document.getElementById('mineBtn').addEventListener('click', () => {
-      const now = Date.now();
-      if (now - lastClaim < 7200000) {
-        alert("⏳ နောက် " + Math.ceil((7200000 - (now - lastClaim))/60000) + " မိနစ်ကျန်သေးတယ်");
-        return;
-      }
-      // Simulate ad watch
-      if (confirm("Rewarded Ad ကြည့်မလား? (ပြီးရင် points ရမယ်)")) {
-        const reward = Math.floor(Math.random() * 100) + 50;
-        points += reward;
-        lastClaim = now;
-        updatePoints();
-        alert(`✅ ${reward} pts ရရှိပါပြီ! စုစုပေါင်း: ${points}`);
-      }
-    });
-
-    function completeTask(id) {
-      let reward = [80,50,30][id-1];
-      points += reward;
-      updatePoints();
-      alert(`✅ Task ပြီးပါပြီ! +${reward} pts`);
-    }
-
-    function openBox() {
-      const reward = Math.floor(Math.random() * 290) + 10;
-      points += reward;
-      updatePoints();
-      alert(`🎉 Mystery Box မှ ${reward} pts ရရှိပါပြီ!`);
-    }
-
-    function redeemTier(tier) {
-      if (tier === 1 && points >= 5000 && referrals >= 10) {
-        alert("🎟️ Tier 1 (UC 60) လဲလှယ်လိုက်ပါပြီ။ Admin က UC ပို့ပေးပါမယ်!");
-        points -= 5000;
-        updatePoints();
-      } else {
-        alert("လိုအပ်ချက်မပြည့်သေးပါဘူး။");
-      }
-    }
-
-    // Initial load
+    // စတင်ရန်
+    loadUserInfo();
     updatePoints();
   </script>
 </body>
