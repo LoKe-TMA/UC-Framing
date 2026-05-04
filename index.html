@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>UC Mine Rewards</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
   <style>
     body { margin:0; font-family: system-ui; background:#111; color:#fff; }
     .container { max-width: 500px; margin: 0 auto; padding: 15px; }
@@ -25,7 +26,6 @@
     <!-- HOME -->
     <div id="home" class="tab-content active">
       <div class="header">
-        <!-- Profile -->
         <div class="profile">
           <img id="userPhoto" src="https://via.placeholder.com/60" alt="Profile">
           <div>
@@ -33,7 +33,6 @@
             <small id="userId" style="color:#aaa;">ID: 000000</small>
           </div>
         </div>
-
         <div class="points" id="points">0</div>
         <small>ပွိုင့်</small>
       </div>
@@ -42,7 +41,7 @@
       <p id="cooldown" style="text-align:center; color:#aaa;"></p>
     </div>
 
-    <!-- အခြား Tab တွေ -->
+    <!-- အခြား Tab များ -->
     <div id="tasks" class="tab-content"><h2>📋 Tasks</h2></div>
     <div id="box" class="tab-content"><h2>🎁 Mystery Box</h2></div>
     <div id="redeem" class="tab-content"><h2>🎯 Redeem</h2></div>
@@ -55,11 +54,13 @@
     <button onclick="showTab('redeem')">🎯</button>
   </div>
 
-<<script>
+  <script>
     // ==================== CONFIG ====================
-    const API_BASE = "https://uc-mine-backend.onrender.com";   // ← အလုပ်လုပ်နေပြီ
+    const API_BASE = "https://uc-mine-backend.onrender.com";
+    const BLOCK_ID = "int-29372";   // ← ဒီနေရာမှာ AdsGram Block ID ထည့်ပါ
 
     let points = 0;
+    let AdController = null;
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
@@ -70,9 +71,7 @@
       if (user) {
         document.getElementById('userName').textContent = user.first_name + (user.last_name ? " " + user.last_name : "");
         document.getElementById('userId').textContent = "ID: " + user.id;
-        if (user.photo_url) {
-          document.getElementById('userPhoto').src = user.photo_url;
-        }
+        if (user.photo_url) document.getElementById('userPhoto').src = user.photo_url;
       }
     }
 
@@ -85,16 +84,33 @@
       document.getElementById(tab).classList.add('active');
     }
 
-    // ==================== MINE CLAIM ====================
+    // ==================== ADSGRAM INIT ====================
+    async function initAdsGram() {
+      try {
+        AdController = window.Adsgram.init({ blockId: BLOCK_ID });
+        console.log("✅ AdsGram Ready");
+      } catch (e) {
+        console.error("AdsGram Error", e);
+      }
+    }
+
+    // ==================== MINE WITH AD ====================
     document.getElementById('mineBtn').addEventListener('click', async () => {
       const userId = tg.initDataUnsafe?.user?.id || "test123";
-      
+
+      if (!AdController) {
+        alert("❌ AdsGram မနှိုးထားသေးပါ");
+        return;
+      }
+
       try {
+        // Show Rewarded Ad
+        await AdController.show();
+
+        // Ad ကြည့်ပြီးရင် Backend ကို ပို့
         const res = await fetch(`${API_BASE}/api/claim`, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: userId.toString() })
         });
 
@@ -103,19 +119,19 @@
         if (data.success) {
           points = data.newPoints || (points + data.reward);
           updatePoints();
-          alert(`✅ ${data.reward} pts ရရှိပါပြီ!`);
+          alert(`✅ Ad ကြည့်ပြီး ${data.reward} pts ရရှိပါပြီ!`);
         } else {
           alert(data.message || "Cooldown ရှိနေသေးတယ်");
         }
       } catch (e) {
-        console.error(e);
-        alert("❌ ချိတ်ဆက်မှု မအောင်မြင်ပါ\n\n1. Internet စစ်ပါ\n2. Render မှာ အလုပ်လုပ်နေရဲ့လား?");
+        alert("❌ Ad ကြည့်မပြီးသေးပါ (သို့) ပယ်ချလိုက်ပါပြီ");
       }
     });
 
     // ==================== INITIAL LOAD ====================
     loadUserInfo();
     updatePoints();
-</script>
+    initAdsGram();
+  </script>
 </body>
 </html>
