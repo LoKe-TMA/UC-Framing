@@ -18,7 +18,6 @@
     .nav { position:fixed; bottom:0; width:100%; max-width:500px; background:#222; display:flex; justify-content:space-around; padding:10px 0; }
     button { width:100%; padding:15px; margin:10px 0; background:#0a0; color:white; border:none; border-radius:12px; font-size:1.1rem; }
     .mine-btn { background: linear-gradient(#ff0, #f80); font-size:1.4rem; }
-    .banner-ad { margin:10px 0; text-align:center; }
   </style>
 </head>
 <body>
@@ -37,23 +36,20 @@
         <div class="points" id="points">0</div>
         <small>ပွိုင့်</small>
       </div>
-      <button id="mineBtn" class="mine-btn">⛏️ မှန်း 2 နာရီ ကြာပြီ – Rewarded Ad ကြည့်ပြီး မှန်း</button>
+      <button id="mineBtn" class="mine-btn">⛏️ Rewarded Ad ကြည့်ပြီး မှန်း</button>
     </div>
 
-    <!-- TASKS (Interstitial Ad နဲ့ စမ်း) -->
+    <!-- TASKS -->
     <div id="tasks" class="tab-content">
       <h2>📋 Tasks</h2>
-      <button onclick="showInterstitialAd()" style="background:#f80;">Interstitial Ad ကြည့်ပြီး Task လုပ်မယ် (+50 pts)</button>
+      <button onclick="completeTaskWithAd()" style="background:#f80; margin:10px 0;">
+        📺 Task Ad ကြည့်ပြီး +50 pts ရယူမယ်
+      </button>
     </div>
 
-    <!-- BOX -->
+    <!-- BOX & REDEEM -->
     <div id="box" class="tab-content"><h2>🎁 Mystery Box</h2></div>
-
-    <!-- REDEEM -->
     <div id="redeem" class="tab-content"><h2>🎯 Redeem</h2></div>
-
-    <!-- Banner Ad နေရာ -->
-    <div class="banner-ad" id="bannerContainer"></div>
   </div>
 
   <div class="nav">
@@ -66,15 +62,15 @@
   <script>
     // ==================== CONFIG ====================
     const API_BASE = "https://uc-mine-backend.onrender.com";
-    
-    const REWARDED_BLOCK_ID   = "29373";     // ← Rewarded Block ID
-    const INTERSTITIAL_BLOCK_ID = "int-29372"; // ← Interstitial Block ID
-    const BANNER_BLOCK_ID     = "သင့်_BANNER_BLOCK_ID";       // ← Banner Block ID
+
+    const REWARDED_ID = "29373";
+    const TASK_ID = "task-29374";
+    const INTERSTITIAL_ID = "int-29372";
 
     let points = 0;
     let AdRewarded = null;
+    let AdTask = null;
     let AdInterstitial = null;
-    let AdBanner = null;
 
     const tg = window.Telegram.WebApp;
     tg.ready();
@@ -90,21 +86,24 @@
       }
     }
 
-    function updatePoints() { document.getElementById('points').textContent = points; }
+    function updatePoints() {
+      document.getElementById('points').textContent = points;
+    }
+
     function showTab(tab) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.getElementById(tab).classList.add('active');
     }
 
-    // ==================== ADSGRAM INIT (3 မျိုး) ====================
-    async function initAllAds() {
+    // ==================== INIT ADS ====================
+    async function initAds() {
       try {
-        AdRewarded = window.Adsgram.init({ blockId: REWARDED_BLOCK_ID });
-        AdInterstitial = window.Adsgram.init({ blockId: INTERSTITIAL_BLOCK_ID });
-        AdBanner = window.Adsgram.init({ blockId: BANNER_BLOCK_ID });
-        console.log("✅ AdsGram 3 မျိုး အားလုံး Ready");
+        AdRewarded = window.Adsgram.init({ blockId: REWARDED_ID });
+        AdTask = window.Adsgram.init({ blockId: TASK_ID });
+        AdInterstitial = window.Adsgram.init({ blockId: INTERSTITIAL_ID });
+        console.log("✅ All Ads Initialized");
       } catch (e) {
-        console.error("AdsGram Init Error", e);
+        console.error("Ads Init Error", e);
       }
     }
 
@@ -124,42 +123,40 @@
         if (data.success) {
           points = data.newPoints || (points + data.reward);
           updatePoints();
-          alert(`✅ Rewarded Ad ကြည့်ပြီး ${data.reward} pts ရရှိပါပြီ!`);
+          alert(`✅ ${data.reward} pts ရရှိပါပြီ!`);
         }
       } catch (e) {
-        alert("❌ Rewarded Ad ကြည့်မပြီးသေးပါ");
+        alert("❌ Ad ကြည့်မပြီးသေးပါ");
       }
     });
 
-    // ==================== 2. INTERSTITIAL AD (Tasks) ====================
-    window.showInterstitialAd = async () => {
-      if (!AdInterstitial) return alert("❌ Interstitial Ad မနှိုးထားသေးပါ");
+    // ==================== 2. TASK AD ====================
+    window.completeTaskWithAd = async () => {
+      const userId = tg.initDataUnsafe?.user?.id || "test123";
+      if (!AdTask) return alert("❌ Task Ad မနှိုးထားသေးပါ");
+
       try {
-        await AdInterstitial.show();
-        points += 50;
-        updatePoints();
-        alert("✅ Interstitial Ad ပြီး +50 pts ရရှိပါပြီ!");
+        await AdTask.show();
+        const res = await fetch(`${API_BASE}/api/task`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId.toString(), task_id: 1 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          points += data.reward || 50;
+          updatePoints();
+          alert(`✅ Task Ad ကြည့်ပြီး +${data.reward || 50} pts ရရှိပါပြီ!`);
+        }
       } catch (e) {
-        alert("❌ Interstitial Ad ကြည့်မပြီးသေးပါ");
+        alert("❌ Task Ad ကြည့်မပြီးသေးပါ");
       }
     };
-
-    // ==================== 3. BANNER AD ====================
-    async function showBannerAd() {
-      if (!AdBanner) return;
-      try {
-        const banner = await AdBanner.showBanner({ container: document.getElementById('bannerContainer') });
-        console.log("Banner shown");
-      } catch (e) {
-        console.error("Banner Error", e);
-      }
-    }
 
     // ==================== INITIAL LOAD ====================
     loadUserInfo();
     updatePoints();
-    initAllAds();
-    showBannerAd();   // Banner ကို စတင်ပြပါမယ်
+    initAds();
   </script>
 </body>
 </html>
