@@ -16,13 +16,14 @@
     .tab-content { display:none; }
     .tab-content.active { display:block; }
     .nav { position:fixed; bottom:0; width:100%; max-width:500px; background:#222; display:flex; justify-content:space-around; padding:10px 0; }
-    button { width:100%; padding:15px; margin:10px 0; background:#0a0; color:white; border:none; border-radius:12px; font-size:1.1rem; }
+    button { width:100%; padding:18px; margin:12px 0; background:#0a0; color:white; border:none; border-radius:12px; font-size:1.1rem; }
     .mine-btn { background: linear-gradient(#ff0, #f80); font-size:1.4rem; }
   </style>
 </head>
 <body>
   <div class="container">
 
+    <!-- HOME -->
     <div id="home" class="tab-content active">
       <div class="header">
         <div class="profile">
@@ -38,13 +39,12 @@
       <button id="mineBtn" class="mine-btn">⛏️ Rewarded Ad ကြည့်ပြီး မှန်း</button>
     </div>
 
+    <!-- TASKS -->
     <div id="tasks" class="tab-content">
       <h2>📋 Tasks</h2>
-      <adsgram-task 
-        data-block-id="task-29374"
-        data-reward="50"
-        onclick="completeTaskWithAd()">
-      </adsgram-task>
+      <button onclick="showTaskAd()" style="background:#f80;">
+        📺 Interstitial Ad ကြည့်ပြီး +50 pts ရယူမယ်
+      </button>
     </div>
 
     <div id="box" class="tab-content"><h2>🎁 Mystery Box</h2></div>
@@ -90,17 +90,17 @@
       document.getElementById(tab).classList.add('active');
     }
 
-    // Init Rewarded + Interstitial
     async function initAds() {
       try {
         AdRewarded = window.Adsgram.init({ blockId: REWARDED_ID });
         AdInterstitial = window.Adsgram.init({ blockId: INTERSTITIAL_ID });
+        console.log("✅ Ads Ready");
       } catch (e) {
-        console.error("Ads Init Error", e);
+        console.error(e);
       }
     }
 
-    // Mine (Rewarded)
+    // Rewarded Mine
     document.getElementById('mineBtn').addEventListener('click', async () => {
       const userId = tg.initDataUnsafe?.user?.id || "test123";
       try {
@@ -121,11 +121,17 @@
       }
     });
 
-    // Task Ad (Web Component နဲ့ အလိုအလျောက် အလုပ်လုပ်မယ်)
-    window.completeTaskWithAd = async () => {
-      points += 50;
-      updatePoints();
-      alert("✅ Task ပြီးပါပြီ! +50 pts");
+    // Task Ad (Interstitial)
+    window.showTaskAd = async () => {
+      const userId = tg.initDataUnsafe?.user?.id || "test123";
+      try {
+        await AdInterstitial.show();
+        points += 50;
+        updatePoints();
+        alert(`✅ Task ပြီးပါပြီ! +50 pts`);
+      } catch (e) {
+        alert("❌ Ad မပေါ်ပါဘူး");
+      }
     };
 
     loadUserInfo();
