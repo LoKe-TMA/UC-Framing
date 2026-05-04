@@ -55,20 +55,21 @@
     <button onclick="showTab('redeem')">🎯</button>
   </div>
 
-  <script>
-    const API_BASE = "https://uc-mine-backend.onrender.com";   // ← သင့် ngrok URL ထည့်ပါ
+<script>
+    // ==================== CONFIG ====================
+    const API_BASE = "https://your-render-url.onrender.com";   // ← ဒီနေရာမှာ သင့် Render URL အတိအကျ ထည့်ပါ
+    
     let points = 0;
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 
-    // User Info ထည့်ပါ
+    // ==================== USER INFO ====================
     function loadUserInfo() {
       const user = tg.initDataUnsafe?.user;
       if (user) {
         document.getElementById('userName').textContent = user.first_name + (user.last_name ? " " + user.last_name : "");
         document.getElementById('userId').textContent = "ID: " + user.id;
-        
         if (user.photo_url) {
           document.getElementById('userPhoto').src = user.photo_url;
         }
@@ -84,33 +85,38 @@
       document.getElementById(tab).classList.add('active');
     }
 
-    // Mine Button (Backend နဲ့ ချိတ်ထားပြီး)
+    // ==================== MINE CLAIM ====================
     document.getElementById('mineBtn').addEventListener('click', async () => {
       const userId = tg.initDataUnsafe?.user?.id || "test123";
       
       try {
         const res = await fetch(`${API_BASE}/api/claim`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify({ user_id: userId.toString() })
         });
+
         const data = await res.json();
-        
+
         if (data.success) {
-          points = data.newPoints;
+          points = data.newPoints || points + data.reward;
           updatePoints();
           alert(`✅ ${data.reward} pts ရရှိပါပြီ!`);
         } else {
           alert(data.message || "Cooldown ရှိနေသေးတယ်");
         }
       } catch (e) {
-        alert("❌ Backend နဲ့ မချိတ်နိုင်သေးပါဘူး");
+        console.error(e);
+        alert("❌ Backend နဲ့ မချိတ်နိုင်ပါ\n\nRender URL မှန်ရဲ့လား စစ်ကြည့်ပါ");
       }
     });
 
-    // စတင်ရန်
+    // ==================== INITIAL LOAD ====================
     loadUserInfo();
     updatePoints();
-  </script>
+</script>
 </body>
 </html>
