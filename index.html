@@ -55,10 +55,10 @@
     <button onclick="showTab('redeem')">🎯</button>
   </div>
 
-<script>
+<<script>
     // ==================== CONFIG ====================
-    const API_BASE = "https://uc-mine-backend.onrender.com";   // ← ဒီနေရာမှာ သင့် Render URL အတိအကျ ထည့်ပါ
-    
+    const API_BASE = "https://uc-mine-backend.onrender.com";   // ← အလုပ်လုပ်နေပြီ
+
     let points = 0;
     const tg = window.Telegram.WebApp;
     tg.ready();
@@ -93,8 +93,7 @@
         const res = await fetch(`${API_BASE}/api/claim`, {
           method: 'POST',
           headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({ user_id: userId.toString() })
         });
@@ -102,7 +101,7 @@
         const data = await res.json();
 
         if (data.success) {
-          points = data.newPoints || points + data.reward;
+          points = data.newPoints || (points + data.reward);
           updatePoints();
           alert(`✅ ${data.reward} pts ရရှိပါပြီ!`);
         } else {
@@ -110,7 +109,7 @@
         }
       } catch (e) {
         console.error(e);
-        alert("❌ Backend နဲ့ မချိတ်နိုင်ပါ\n\nRender URL မှန်ရဲ့လား စစ်ကြည့်ပါ");
+        alert("❌ ချိတ်ဆက်မှု မအောင်မြင်ပါ\n\n1. Internet စစ်ပါ\n2. Render မှာ အလုပ်လုပ်နေရဲ့လား?");
       }
     });
 
