@@ -23,7 +23,6 @@
 <body>
   <div class="container">
 
-    <!-- HOME -->
     <div id="home" class="tab-content active">
       <div class="header">
         <div class="profile">
@@ -39,12 +38,13 @@
       <button id="mineBtn" class="mine-btn">⛏️ Rewarded Ad ကြည့်ပြီး မှန်း</button>
     </div>
 
-    <!-- TASKS -->
     <div id="tasks" class="tab-content">
       <h2>📋 Tasks</h2>
-      <button onclick="completeTaskWithAd()" style="background:#f80; margin:15px 0; padding:20px;">
-        📺 Interstitial / Task Ad ကြည့်ပြီး +50 pts ရယူမယ်
-      </button>
+      <adsgram-task 
+        data-block-id="task-29374"
+        data-reward="50"
+        onclick="completeTaskWithAd()">
+      </adsgram-task>
     </div>
 
     <div id="box" class="tab-content"><h2>🎁 Mystery Box</h2></div>
@@ -62,12 +62,11 @@
     const API_BASE = "https://uc-mine-backend.onrender.com";
 
     const REWARDED_ID = "29373";
-    const TASK_ID = "task-29374";
     const INTERSTITIAL_ID = "int-29372";
 
     let points = 0;
     let AdRewarded = null;
-    let AdTask = null;
+    let AdInterstitial = null;
 
     const tg = window.Telegram.WebApp;
     tg.ready();
@@ -91,25 +90,26 @@
       document.getElementById(tab).classList.add('active');
     }
 
-    // Init Ads
+    // Init Rewarded + Interstitial
     async function initAds() {
       try {
         AdRewarded = window.Adsgram.init({ blockId: REWARDED_ID });
-        AdTask = window.Adsgram.init({ blockId: TASK_ID });
-        console.log("✅ Ads Initialized Successfully");
+        AdInterstitial = window.Adsgram.init({ blockId: INTERSTITIAL_ID });
       } catch (e) {
-        console.error("❌ Ads Init Failed", e);
+        console.error("Ads Init Error", e);
       }
     }
 
-    // Mine Rewarded Ad
+    // Mine (Rewarded)
     document.getElementById('mineBtn').addEventListener('click', async () => {
       const userId = tg.initDataUnsafe?.user?.id || "test123";
-      if (!AdRewarded) return alert("❌ Rewarded Ad မနှိုးထားသေးပါ");
-
       try {
         await AdRewarded.show();
-        const res = await fetch(`${API_BASE}/api/claim`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_id: userId }) });
+        const res = await fetch(`${API_BASE}/api/claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId })
+        });
         const data = await res.json();
         if (data.success) {
           points = data.newPoints || points + data.reward;
@@ -117,38 +117,17 @@
           alert(`✅ ${data.reward} pts ရရှိပါပြီ!`);
         }
       } catch (e) {
-        alert("❌ Rewarded Ad ပြဿနာ ရှိနေပါတယ်");
+        alert("❌ Rewarded Ad Error");
       }
     });
 
-    // Task Ad (Interstitial / Task)
+    // Task Ad (Web Component နဲ့ အလိုအလျောက် အလုပ်လုပ်မယ်)
     window.completeTaskWithAd = async () => {
-      const userId = tg.initDataUnsafe?.user?.id || "test123";
-      if (!AdTask) return alert("❌ Task Ad မနှိုးထားသေးပါ");
-
-      try {
-        console.log("Showing Task Ad...");
-        await AdTask.show();
-        console.log("Ad shown successfully");
-
-        // Backend ကို ပို့
-        const res = await fetch(`${API_BASE}/api/task`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId, task_id: 1 })
-        });
-        const data = await res.json();
-
-        points += data.reward || 50;
-        updatePoints();
-        alert(`✅ Task Ad ကြည့်ပြီး +50 pts ရရှိပါပြီ!`);
-      } catch (e) {
-        console.error("Task Ad Error:", e);
-        alert("❌ Task Ad မပေါ်ပါဘူး\n\n" + e.message);
-      }
+      points += 50;
+      updatePoints();
+      alert("✅ Task ပြီးပါပြီ! +50 pts");
     };
 
-    // Start
     loadUserInfo();
     updatePoints();
     initAds();
